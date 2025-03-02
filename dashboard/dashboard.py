@@ -41,50 +41,52 @@ page = st.sidebar.radio("Pilih Analisis", ["🏠 Halaman Utama", "🏙️ Top 10
 
 # ---------------------- ANALISIS TOP 10 KOTA ----------------------
 if page == "🏙️ Top 10 Kota":
-    st.subheader("🏙️ Top 10 Kota dengan Pelanggan Terbanyak")
+    st.subheader("🏙️ Perbandingan Jumlah Pelanggan di antara 10 Kota Terpilih dengan Pelanggan Terbanyak")
 
-    # Load Dataset
     city_df = pd.read_csv("data/topTencities.csv")
 
-    # **Menampilkan Pertanyaan Analisis**
-    st.markdown("## Pertanyaan Analisis")
-    st.write("**Sebutkan 10 jumlah pelanggan E-Commerce terbanyak berdasarkan daerah asalnya?**")
+    # Checkbox untuk memilih semua kota
+    all_cities = st.checkbox("Bandingkan Semua Kota", value=False)
 
-    # Urutkan dari jumlah pelanggan terbanyak
-    city_df = city_df.sort_values(by="customer_count", ascending=False)
+    # Multiselect untuk memilih kota tertentu jika "Bandingkan Semua Kota" tidak dicentang
+    if not all_cities:
+        selected_cities = st.multiselect(
+            "Pilih Kota untuk Perbandingan:",
+            options=city_df["customer_city"].unique(),
+            default=city_df["customer_city"].unique()[:2]  # Default menampilkan 2 kota pertama
+        )
+    else:
+        selected_cities = city_df["customer_city"].unique()  # Pilih semua kota jika checkbox aktif
+
+    # Filter data sesuai pilihan user
+    filtered_city_df = city_df[city_df["customer_city"].isin(selected_cities)]
 
     # Tampilkan Data
-    st.dataframe(city_df)
+    st.dataframe(filtered_city_df)
 
-    # Visualisasi dengan Plotly
+    # **Visualisasi Perbandingan**
     fig = px.bar(
-        city_df, 
-        x="customer_count", 
-        y="customer_city", 
-        color="customer_state", 
-        text="customer_count", 
-        orientation="h",
-        title="Top 10 Kota dengan Pelanggan Terbanyak",
+        filtered_city_df,
+        x="customer_city",
+        y="customer_count",
+        color="customer_state",
+        text="customer_count",
+        title="Perbandingan Jumlah Pelanggan di antara 10 Kota Terpilih dengan Pelanggan Terbanyak",
         labels={"customer_count": "Jumlah Pelanggan", "customer_city": "Kota"},
-        color_continuous_scale="Blues"
+        color_discrete_sequence=px.colors.sequential.Plasma
     )
-
-    # Menyesuaikan tampilan agar lebih bersih dan mudah dibaca
-    fig.update_traces(texttemplate='%{text:,}', textposition='inside')
-    fig.update_layout(
-        xaxis_title="Jumlah Pelanggan",
-        yaxis_title="Kota",
-        yaxis={'categoryorder':'total ascending'},
-        template="plotly_white"
-)
 
     st.plotly_chart(fig, use_container_width=True)
 
+
      # **Menampilkan Jawaban Analisis**
     st.markdown(f"""
-    **Insights**
-    - São Paulo memiliki jumlah pelanggan tertinggi, maka kota ini bisa menjadi target utama kampanye pemasaran atau pengoptimalan logistik.
-    - Dapat dilihat bahwa kota selain Sao Paulo memliki persebaran jumlah pelanggan yang sangat jauh, maka, daerah dengan pelanggan yang jauh lebih sedikit ini dapat menjadi potensi untuk kampanye pemasaran digital atau diskon khusus untuk menarik lebih banyak pelanggan di kota tersebut.         
+    **Kesimpulan:**\n
+    São Paulo dan Rio de Janeiro memiliki jumlah pelanggan paling banyak dibandingkan kota-kota lain. Kota-kota besar lainnya seperti Belo Horizonte dan Brasília juga memiliki jumlah pelanggan yang cukup signifikan.\n
+    **Insights:**\n
+    São Paulo sebagai pusat pelanggan terbesar menunjukkan potensi besar untuk ekspansi bisnis dan pemasaran di kota ini. Rio de Janeiro sebagai pasar besar kedua menegaskan bahwa strategi bisnis harus tetap berfokus pada dua kota utama ini. Keberagaman geografis dari daftar ini menunjukkan bahwa bisnis memiliki jangkauan yang luas, mencakup berbagai negara bagian seperti SP, RJ, MG, DF, PR, RS, dan BA.\n
+    **Strategi bisnis:**\n
+    Perusahaan dapat mempertimbangkan lebih banyak kampanye iklan berbasis lokasi, promosi, dan pengoptimalan layanan pengiriman di kota-kota dengan pelanggan terbanyak         
     """)
 
 # ---------------------- ANALISIS TOP 10 PRODUK ----------------------
@@ -98,18 +100,21 @@ elif page == "🛒 Top 10 Produk Terbaik":
     st.markdown("## Pertanyaan Analisis")
     st.write("**Bagaimana tingkat kepuasan pelanggan E-Commerce berdasarkan 10 nilai rating tertinggi pada pembelian tiap jenis barang yang dilakukan?**")
     
-    # Ambil 10 kategori dengan rating tertinggi
-    top_10_satisfaction = category_df.nlargest(10, 'review_score')
+    # Ambil 10 kategori dengan rating tertinggi, URUTKAN agar skor tertinggi berada di atas
+    top_10_satisfaction = category_df.nlargest(10, 'review_score').sort_values(by="review_score", ascending=False)
 
     # Tampilkan Data
     st.dataframe(top_10_satisfaction)
+
+    # **Membuat Custom Palette dengan Saturasi Sesuai Review Score**
+    custom_palette = list(reversed(sns.color_palette("Greens", len(top_10_satisfaction))))  # Reverse untuk warna gelap di atas
 
     # Visualisasi dengan Matplotlib & Seaborn
     fig, ax = plt.subplots(figsize=(8, 4))
     sns.barplot(data=top_10_satisfaction, 
                 x='review_score', 
                 y='product_category_name_english', 
-                palette='viridis', ax=ax)
+                palette=custom_palette, ax=ax)
 
     ax.set_xlabel("Average Review Score")
     ax.set_ylabel("Product Category (English)")
@@ -119,59 +124,63 @@ elif page == "🛒 Top 10 Produk Terbaik":
 
     st.pyplot(fig)
 
+
     # **Menampilkan Jawaban Analisis**
     st.markdown(f"""
-    **Insights**
-    1.  Kategori "Furniture Bedroom" Mendapatkan Rating Tertinggi (4.94)
-    2. Produk Home & Living Mendominasi "Home Comfort 2" (4.63) dan "Home Appliances 2" (4.33) juga masuk dalam daftar tertinggi.
-    3. Buku dan Hiburan Juga Banyak Disukai Kategori "Books General Interest" (4.42) dan "Books Technical" (4.35) menunjukkan bahwa buku memiliki ulasan yang baik.
-    4. "CDs, DVDs, Musicals" (4.42) juga memiliki rating tinggi, menunjukkan bahwa produk hiburan piringan fisik masih memiliki pasar.
-    5. Kategori Alat & Aksesori Juga Populer "Construction Tools" (4.39) dan "Luggage Accessories" (4.36) mendapatkan skor tinggi.
-    6. Produk Makanan & Minuman Masuk 10 Besar (4.31)
-
-    **Kesimpulan & Rekomendasi**
-    - Fokus pada produk Home & Living karena kategori ini mendominasi rating tinggi.
-    - Eksplorasi peluang di kategori buku dan hiburan, karena pelanggan memberikan rating baik.
-    - Pastikan kualitas produk tetap terjaga, terutama di kategori dengan rating tinggi, untuk mempertahankan kepuasan pelanggan.
-    - Tingkatkan strategi pemasaran pada kategori dengan skor tinggi untuk meningkatkan penjualan.         
+    **Kesimpulan:**\n
+    Kategori furniture_bedroom, home_comfort_2, dan flowers memiliki rating kepuasan pelanggan tertinggi, dengan rata-rata mendekati 5. Produk dari kategori ini sangat memenuhi harapan pelanggan.\n
+    **Insights:**\n
+    Kategori dengan skor tinggi (furniture, home comfort, flowers) menunjukkan bahwa pelanggan puas dengan kualitas dan layanan produk-produk ini. Ini bisa disebabkan oleh kualitas produk yang baik, deskripsi produk yang akurat, atau layanan pengiriman yang andal. Buku dan media (books_general_interest, cds_dvds_musicals) juga mendapat rating tinggi, mungkin karena kualitas isi produk dan keakuratan informasi di toko online.\n
+    **Strategi bisnis:**\n
+    Perusahaan dapat mempertahankan standar tinggi dalam kategori produk dengan rating terbaik dan meningkatkan layanan pada kategori lain agar mendapat tingkat kepuasan yang sama.        
     """)
 
 
 # ---------------------- ANALISIS METODE PEMBAYARAN ----------------------
 elif page == "💳 Metode Pembayaran":
-    st.subheader("💳 Distribusi Metode Pembayaran")
+    st.subheader("💳 Analisis Metode Pembayaran")
 
     # Load Dataset
     payment_df = pd.read_csv("data/paymentCounts.csv")
 
-    st.markdown("## Pertanyaan Analisis")
-    st.write("**Metode Pembayaran apa yang lebih banyak digunakan oleh para pelanggan E-Commerce pada saat memesan barang?**")
+    # Pilihan Visualisasi (Bar Chart atau Pie Chart)
+    viz_option = st.radio("Pilih Tipe Visualisasi:", ["Bar Chart", "Pie Chart"], horizontal=True)
+
+    # Visualisasi dengan Bar Chart atau Pie Chart
+    if viz_option == "Bar Chart":
+        fig = px.bar(
+            payment_df,
+            x="count",
+            y="payment_type",
+            text="count",
+            title="Distribusi Metode Pembayaran",
+            labels={"count": "Jumlah Transaksi", "payment_type": "Metode Pembayaran"},
+            color="payment_type",
+            color_discrete_sequence=px.colors.qualitative.Set2
+        )
+    else:
+        fig = px.pie(
+            payment_df,
+            names="payment_type",
+            values="count",
+            title="Distribusi Metode Pembayaran",
+            labels={"count": "Jumlah Transaksi", "payment_type": "Metode Pembayaran"},
+            color="payment_type",
+            color_discrete_sequence=px.colors.qualitative.Set2
+        )
+
+    # Tampilkan Grafik
+    st.plotly_chart(fig, use_container_width=True)
 
     # Tampilkan Data
     st.dataframe(payment_df)
 
-    # Visualisasi dengan Plotly
-    fig = px.pie(
-        payment_df,
-        names="payment_type",
-        values="count",
-        title="Distribusi Penggunaan Metode Pembayaran",
-        color_discrete_sequence=px.colors.sequential.Viridis
-        )
-    
-    st.plotly_chart(fig)
-
     # **Menampilkan Jawaban Analisis**
     st.markdown(f"""
-    **Insights**
-    1. Kartu Kredit adalah Metode Pembayaran Paling Populer (76.795 transaksi)
-    2. Boleto Menjadi Alternatif Populer (19.784 transaksi) Boleto (sistem pembayaran berbasis kode di Brasil) menjadi metode kedua yang paling banyak digunakan. Ini menunjukkan bahwa beberapa pelanggan masih memilih pembayaran tunai atau transfer bank.
-    3. Debit Card Kurang Diminati (1.529 transaksi)
-    4. Voucher Digunakan dalam 5.775 Transaksi Cukup banyak pelanggan yang menggunakan voucher, menunjukkan bahwa program diskon atau promo cukup diminati.
-    5. Kategori "Not Defined" (3 transaksi) Perlu Diperiksa. Bisa jadi ada data yang salah input atau transaksi yang tidak valid.
-
-    **Kesimpulan & Rekomendasi**
-    1. Fokus pada kartu kredit dan boleto sebagai metode utama pembayaran dengan meningkatkan keamanan dan kemudahan transaksi.
-    2. Tingkatkan promosi dan program diskon berbasis voucher, karena sudah cukup banyak pelanggan yang menggunakannya.
-    3. Lakukan analisis lebih lanjut terhadap transaksi debit card untuk memahami mengapa penggunaannya rendah.            
+    **Kesimpulan:**\n
+    Mayoritas pelanggan menggunakan kartu kredit sebagai metode pembayaran utama, dengan jumlah yang jauh lebih tinggi dibandingkan metode lain seperti boleto, voucher, dan kartu debit. Sementara itu, kategori not_defined memiliki jumlah transaksi yang sangat sedikit.\n
+    **Insights:**\n
+    Kartu kredit adalah metode pembayaran paling populer, kemungkinan karena kenyamanan dan fitur cicilan yang disediakan. Boleto sebagai metode pembayaran kedua mungkin lebih sering digunakan oleh pelanggan yang tidak memiliki kartu kredit. Voucher dan kartu debit kurang populer, menunjukkan bahwa banyak pelanggan lebih memilih kredit dibanding debit untuk berbelanja online.\n
+    **Strategi bisnis:**\n
+    Merchant dapat mempertimbangkan untuk menawarkan lebih banyak promo atau cashback bagi pengguna metode pembayaran yang kurang populer guna meningkatkan diversifikasi transaksi.         
     """)
