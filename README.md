@@ -24,8 +24,8 @@ Sebelum menjalankan dashboard, pastikan:
 #### **🔹 a) Clone dari GitHub (Jika ada Repository)**
 Jika proyek sudah ada di **GitHub**, jalankan perintah ini di terminal VS Code:
 ```bash
-  git clone https://github.com/Kholish-Fauzan/analysis_data_with_Python.git
-  cd analysis_data_with_Python
+  git clone https://github.com/Kholish-Fauzan/proyek_Analisis_Data_wPython.git
+  cd proyek_Analisis_Data_wPython
 ```
 #### **🔹 b) Jika Menggunakan File ZIP**
 1. **Download ZIP** proyek.
@@ -81,7 +81,7 @@ Semua dataset sudah **dibersihkan dan dianalisis** di **Google Colab (`.ipynb`)*
 ## **🌎 Streamlit Dashboard **
 Dashboard sudah deploy ke **Streamlit Cloud**, akses dashboard melalui URL berikut:
 ```
-  https://kholish-fauzan-analysis-da-dashboardsubmission-dashboard-iivgyr.streamlit.app/
+  https://kholish-fauzan-proyek-analisis-data-w-dashboarddashboard-tnxsg6.streamlit.app/
 ```
 ---
 
